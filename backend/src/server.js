@@ -1,8 +1,9 @@
 // パッケージのインポート
 import dotenv from "dotenv";
 import express from "express";
-import { initDB,sql } from "./config/db.js";
-
+import { initDB, sql } from "./config/db.js";
+import rateLimiter from "./middleware/rateLimiter.js";
+import transactionsRoute from "./routes/transactionsRoute.js";
 // 環境変数の読み込み
 dotenv.config();
 
@@ -10,6 +11,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001; // ポート番号を環境変数から取得、なければ5001を使用
 app.use(express.json());
+
+app.use(rateLimiter);
 
 app.use((req, res, next) => {
   console.log("ミドルウェア", req.method);
@@ -41,6 +44,8 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+app.use("/api/transactions", transactionsRoute);
+
 initDB().then(() => {
   app.listen(PORT, () => {
     console.log("Server is up and running on PORT:", PORT);
@@ -49,7 +54,6 @@ initDB().then(() => {
 
 app.post("/api/transactions", async (req, res) => {
   try {
-
     const { title, amount, category, user_id } = req.body;
     console.log("Received transaction data:", req.body);
 
@@ -57,7 +61,8 @@ app.post("/api/transactions", async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
     // ここにデータベースへの挿入ロジックを追加します
-    const transaction = await sql`INSERT INTO transactions (user_id, title, category, amount) VALUES (${user_id}, ${title}, ${category}, ${amount}) RETURNING *`;
+    const transaction =
+      await sql`INSERT INTO transactions (user_id, title, category, amount) VALUES (${user_id}, ${title}, ${category}, ${amount}) RETURNING *`;
     res.status(201).json(transaction[0]);
   } catch (error) {
     console.error("Error adding transaction:", error);
