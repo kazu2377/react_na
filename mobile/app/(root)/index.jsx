@@ -3,12 +3,12 @@ import { SignedIn, SignedOut, useUser } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
 import { useEffect } from "react";
 import { Text, View } from "react-native";
+import PageLoader from "../../components/PageLoader";
 import { useTransactions } from "../../hooks/useTransactions";
-
 export default function Page() {
   const { user } = useUser();
   // console.log("ユーザー:", user);
-  
+
   const { transactions, summary, isLoading, loadData, deleteTransaction } = useTransactions(
     user.id
   );
@@ -18,21 +18,10 @@ export default function Page() {
   }, [loadData]);
 
   console.log("トランザクション:", transactions);
-
+  if (isLoading) return <PageLoader />;
   return (
     <View>
-      <SignedIn>
-        <Text>Hello {user?.emailAddresses[0].emailAddress}</Text>
-        <SignOutButton />
-      </SignedIn>
-      <SignedOut>
-        <Link href="/(auth)/sign-in">
-          <Text>ログイン</Text>
-        </Link>
-        <Link href="/(auth)/sign-up">
-          <Text>サインアップ</Text>
-        </Link>
-      </SignedOut>
+     
     </View>
   );
 }
